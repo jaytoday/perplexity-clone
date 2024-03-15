@@ -8,6 +8,7 @@
    - The user enters a query into the search interface and starts the search operation.
    - A "Loading Search Results..." text is shown to indicate the search is in progress. 
    - The search automatically initiates if the URL contains a `q` query parameter, which is used to pre-fill the search input. This is useful for sharing search results with others.
+   - Currently, a combination of React hooks and API modules are used to manage the search and summary generation. Compared to the use of a Remix action function, the current approach provides more granular control over multi-step processes, such as first fetching and rendering search results, and subsequently fetching and rendering an AI-generated summary. 
 
 2. **Retrieval of Initial Search Results**:
    - An API request is made to the `api/search` API endpoint with a `query` parameter containing the user's search query.

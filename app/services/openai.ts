@@ -15,7 +15,6 @@ interface SearchParams {
   rankedSearchResults: SearchResult[];
 }
 
-
 export async function summarizeSearchResults(query: string, searchResults: SearchResult[]): Promise<string> {
 
   const { rankedSearchResults, updatedQuery } = await prepareSearchParams(query, searchResults);
@@ -26,8 +25,7 @@ export async function summarizeSearchResults(query: string, searchResults: Searc
 async function prepareSearchParams(query: string, searchResults: SearchResult[]): Promise<SearchParams> {
   /* Rephrase the query as a question (if it is not already) and rank the search results by their likelihood to contain the best answer. */
 
-  let rankedSearchResults: SearchResult[] = [];
-  let updatedQuery: string = ''; 
+  let searchParams: SearchParams | undefined; 
 
   const prompt = `For the query "${query}", call the prepare_search_params function. with a "queryQuestion" parameter rephrasing the query as a question. For example, if the query were to be "Andrew Huberman" rephrase it as "Who is Andrew Huberman?". Also include a "searchResultRankings" parameter with a list of search result IDs in the order of their anticipated utility in answering the query. If none are likely to help, return an empty list. 
   Here are the available search results:
@@ -38,7 +36,7 @@ async function prepareSearchParams(query: string, searchResults: SearchResult[])
       name: 'prepare_search_params',
       description: 'Use this to rank search results in order of their anticipated utility in answering the provided query',
       argsSchema: z.object({
-        rephrasedQuery: string().describe('The query rephrased as a question.'),
+        updatedQuery: string().describe('The query rephrased as a question.'),
         searchResultRankings: z
           .array(number())
           .describe(
@@ -46,8 +44,9 @@ async function prepareSearchParams(query: string, searchResults: SearchResult[])
           ),
       }),
     },
-    async ({ rephrasedQuery, searchResultRankings }) => {
-      updatedQuery = rephrasedQuery;
+    async ({ updatedQuery, searchResultRankings }) => {
+      console.log(`query "${query}" rephrased as a question: "${updatedQuery}"`)
+      const rankedSearchResults: SearchResult[] = [];
       searchResultRankings.forEach((id) => {
         const result = searchResults[id];
         if (result){
@@ -56,6 +55,8 @@ async function prepareSearchParams(query: string, searchResults: SearchResult[])
           console.error(`No result found for index ${id} provided by the AI`);
         }
       });
+      console.log(`Re-ranked search results: ${rankedSearchResults.map((result, index) => `${result.title} (${result.link})`).join('\n')}`);
+      searchParams = { updatedQuery, rankedSearchResults };
     }
   );
 
@@ -65,14 +66,15 @@ async function prepareSearchParams(query: string, searchResults: SearchResult[])
     systemMessage: "Return a sorted list of the IDs of search results most likely to contain the answer to the provided query.",
   });
 
-  const response = await prepareSearchParamsRunner({
+  await prepareSearchParamsRunner({
     messages: [Msg.user(prompt)],
   });
 
-  return {
-    updatedQuery,
-    rankedSearchResults
+  if (!searchParams) {
+    throw new Error('Failed to generate search parameters');
   }
+
+  return searchParams;
 
 }
 
@@ -83,14 +85,22 @@ async function generateSearchAnswer(
 ): Promise<string> {
 
   const nextSearchResult = searchResults[0];
-  let nextSearchResultPageContent = await extractTextFromWebPage(nextSearchResult.link);
+  let nextSearchResultPageContent: string;
+  try {
+    nextSearchResultPageContent = await extractTextFromWebPage(nextSearchResult.link);
+  } catch (error) {
+    console.log(`Error extracting text from URL (${nextSearchResult.link}):`, error); // this occasionally happens, for now just catch and move on
+    if (searchResults.length === 0) {
+      return answers?.[answers.length - 1] || 'Sorry, I was unable to find an answer to your query.'; // very unlikely that no pages can be extracted from, but handle just in case
+    }
+    return await generateSearchAnswer(query, searchResults.slice(1), [...answers]);
+  }
 
   if (nextSearchResultPageContent.length > MAX_SEARCH_PAGE_CONTENT_CHARS) {
     nextSearchResultPageContent = `${nextSearchResultPageContent.slice(0, MAX_SEARCH_PAGE_CONTENT_CHARS)}...`;
   }
 
-  let queryAnswer = '';
-  let doesRequireMoreInformation = false;
+  let answerResponse: { answer: string; requiresMoreInformation: boolean } | undefined;
 
   const prompt = `You are a helpful assistant providing an answer to the following query: "${query}" 
 
@@ -114,9 +124,9 @@ async function generateSearchAnswer(
         requiresMoreInformation: z.boolean().describe('Whether a sufficient answer to the query requires more information.'),
       }),
     },
-    async ({ answer, requiresMoreInformation }) => {
-      queryAnswer = answer;
-      doesRequireMoreInformation = requiresMoreInformation;
+    async (res) => {
+      console.log(`Generated answer: "${res.answer}". Requires more information to answer query: ${res.requiresMoreInformation}`);
+      answerResponse = res;
     }
   );
 
@@ -126,22 +136,26 @@ async function generateSearchAnswer(
     systemMessage: "Use the provided information to generate an answer to the specified query.",
   });
 
-  const response = await generateAnswerRunner({
+  await generateAnswerRunner({
     messages: [Msg.user(prompt)],
   });
 
-  if (!doesRequireMoreInformation) {
+  if (!answerResponse) {
+    throw new Error('Failed to generate an answer response');
+  }
+
+  if (!answerResponse.requiresMoreInformation) {
     // this answer is sufficient to answer the query
-    return queryAnswer;
+    return answerResponse.answer;
   }
 
   if (searchResults.length === 0) {
     // none of the generated answers have been considered sufficient
     // there are a variety of things we could do from here such as fetch more search results and try again. But we will just return the most recently produced answer.
-    return queryAnswer;
+    return answerResponse.answer;
   }
 
-  return await generateSearchAnswer(query, searchResults.slice(1), [...answers, queryAnswer]);
+  return await generateSearchAnswer(query, searchResults.slice(1), [...answers, answerResponse.answer]);
 
 }
 

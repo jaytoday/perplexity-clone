@@ -60,6 +60,7 @@ export default function Index() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     setSummary(null);
     setQuery(event.currentTarget.query.value);
+    history.pushState({}, '', `/?q=${encodeURIComponent(event.currentTarget.query.value)}`);
   };
 
   return (
@@ -76,13 +77,14 @@ export default function Index() {
                 placeholder="Search the web"
                 className="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 block w-full shadow-sm md:text-lg lg:text-xl border-gray-300 rounded-md"
               />
-            </div>
+            
             <button type="submit" className="w-full mt-4 p-4 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
               Search
             </button>
+        </div>
         </searchFetcher.Form>
         <div className="my-8 mx-auto">
-          {isLoadingSummary ? (
+          {searchFetcher.state === 'idle' && isLoadingSummary ? (
             <span className="font-bold text-xl inline-flex">
               <LoadingIcon size={7} />
               <span className="ml-2">Loading AI Summary...</span>
