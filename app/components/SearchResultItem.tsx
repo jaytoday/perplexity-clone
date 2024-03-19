@@ -14,15 +14,15 @@ type SearchResultItemProps = {
   
     return (
       <div className="mb-4 p-4">
-        <a href={result.link} target="_blank" rel="noopener noreferrer" className="text-lg font-bold text-primary-700 ">
+        <a href={result.link} target="_blank" rel="noopener noreferrer" className="text-xl font-bold text-primary-700 ">
           {result.title}
         </a>
         {highlightedSnippet && (
         <p dangerouslySetInnerHTML={{ __html: highlightedSnippet }} className="mt-1"></p>
         )}
-        <div className="flex justify-center mt-2">
+        <div className="flex justify-left mt-2">
           {result.favicon && (
-            <img src={result.favicon} alt="" className="w-4 h-4 mr-2" />
+            <img src={result.favicon} alt="" className="mt-1 w-4 h-4 mr-2" />
           )}
          <a href={result.link} target="_blank" rel="noopener noreferrer"> <span className="text-sm text-gray-600">{result.displayed_link}</span></a>
         </div>

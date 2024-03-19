@@ -65,8 +65,8 @@ export default function Index() {
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
-      <div className="text-center p-8 bg-white shadow-md rounded-lg w-full max-w-screen-xl">
-        <h1 className="mt-10 text-3xl font-bold mb-4"><span className="mr-2">🔍</span> Search With AI</h1>
+      <div className="text-left p-8 bg-white shadow-md rounded-lg w-full max-w-screen-xl">
+        <h1 className="mt-10 text-3xl font-bold mb-4 ml-4"><span className="mr-2">🔍</span> Search With AI</h1>
         <searchFetcher.Form method="get" action="/api/search" className="space-y-4" onSubmit={handleSubmit}>
           <div className="p-2">
               <input
@@ -85,7 +85,7 @@ export default function Index() {
         </searchFetcher.Form>
         <div className="my-8 mx-auto">
           {searchFetcher.state === 'idle' && isLoadingSummary ? (
-            <span className="font-bold text-xl inline-flex">
+            <span className="font-bold text-xl inline-flex ml-4">
               <LoadingIcon size={7} />
               <span className="ml-2">Loading AI Summary...</span>
             </span>
@@ -93,7 +93,7 @@ export default function Index() {
             summary && <SearchSummary summary={summary} />
           )}
           {searchFetcher.state !== 'idle' ? (
-            <span className="font-bold text-xl inline-flex">
+            <span className="font-bold text-xl inline-flex ml-4">
               <LoadingIcon size={7} />
               <span className="ml-2">Loading Search Results...</span>
             </span>
