@@ -1,8 +1,8 @@
-import { json, LoaderFunction } from '@remix-run/node';
+import { json, ActionFunction } from '@remix-run/node';
 import { summarizeSearchResults } from '~/services/openai';
 import type { SearchResult } from '~/types';
 
-export const action: LoaderFunction = async ({ request }): Promise<Response> => {
+export const action: ActionFunction = async ({ request }): Promise<Response> => {
   if (request.method !== 'POST') {
     return json({ error: 'Method Not Allowed' }, { status: 405 });
   }

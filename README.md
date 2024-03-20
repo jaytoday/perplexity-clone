@@ -1,8 +1,6 @@
-# Welcome to the Dexa coding interview
+# Simple Perplexity Clone
 
-## Post-Exercise Notes 
-
-### Overview of the Current Implementation
+## Overview of the Current Implementation
 
 1. **User Initiates Search**:
    - The user enters a query into the search interface and starts the search operation.
@@ -69,22 +67,6 @@ These are a few of the reasons why a search tool would likely make use of retrie
 
 Regardless of what changes were made, it would be helpful to make use of evaluation tools that could assist with quickly gauging the impact of changes made to prompts, models, APIs (OpenAI, Anthropic, etc.), and architecture. It would be specifically helpful to perform evaluation across a range of types of queries, as it is entirely possible that certain changes may improve quality and performance for some types of queries, but not others. This may lead to considerations around trade-offs, and potentially utilizing different techniques and tools for different types of queries. 
 
-
----
-
-This is meant to be a collaborative "open book" exercise. Please use any apps, 
-tools, AI, etc that you would normally use while programming.
-
-We have also included a few helpful services/tools to save you time. More 
-details below.
-
-## Task
-
-Build a simple clone of [Perplexity](https://www.perplexity.ai/).
-
-When the user submits a new search, they should be presented with the search 
-results from Google, as well as an AI generated response to their query, based 
-on the retrieved Google search results.
 
 ## Setup
 
